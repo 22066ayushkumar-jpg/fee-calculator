@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Martin County Fee Calculator</title>
+    <style>
+        :root {
+            --mc-primary: #0a4275;
+            --mc-secondary: #1e3a8a;
+            --mc-accent: #f59e0b;
+            --mc-bg: #f3f4f6;
+            --mc-card: #ffffff;
+            --mc-border: #d1d5db;
+            --mc-text: #1f2937;
+            --mc-text-muted: #6b7280;
+            --mc-success: #10b981;
+        }
+
+        .mc-calculator-wrapper {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--mc-bg);
+            color: var(--mc-text);
+            max-width: 1100px;
+            margin: 0 auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-wrap: wrap;
+            line-height: 1.5;
+        }
+
+        .mc-calculator-wrapper * {
+            box-sizing: border-box;
+        }
+
+        /* Header */
+        .mc-header {
+            width: 100%;
+            background: linear-gradient(135deg, var(--mc-primary) 0%, var(--mc-secondary) 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 5px solid var(--mc-accent);
+        }
+
+        .mc-header h2 { margin: 0 0 5px 0; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        .mc-header p { margin: 0; color: #cbd5e1; font-size: 1rem; }
+
+        /* Layout */
+        .mc-col-left {
+            flex: 1.5;
+            padding: 30px;
+            background: var(--mc-card);
+            min-width: 320px;
+        }
+
+        .mc-col-right {
+            flex: 1;
+            padding: 30px;
+            background: #f8fafc;
+            border-left: 1px solid var(--mc-border);
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Form Elements */
+        .mc-section-title {
+            font-size: 1.2rem;
+            color: var(--mc-primary);
+            border-bottom: 2px solid var(--mc-border);
+            padding-bottom: 8px;
+            margin: 0 0 20px 0;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .mc-row { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .mc-col { flex: 1; min-width: 150px; }
+
+        .mc-calculator-wrapper label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        .mc-calculator-wrapper select, 
+        .mc-calculator-wrapper input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #9ca3af;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: #fff;
+            color: var(--mc-text);
+            transition: all 0.2s;
+        }
+
+        .mc-calculator-wrapper select:focus, 
+        .mc-calculator-wrapper input[type="number"]:focus {
+            outline: none;
+            border-color: var(--mc-primary);
+            box-shadow: 0 0 0 3px rgba(10, 66, 117, 0.15);
+        }
+
+        .mc-input-icon { position: relative; }
+        .mc-input-icon span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 600; color: var(--mc-text-muted); }
+        .mc-input-icon input { padding-left: 25px; font-weight: 600; }
+
+        .mc-checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .mc-check-card {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid var(--mc-border);
+            border-radius: 6px;
+            cursor: pointer;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+        
+        .mc-check-card:hover { border-color: var(--mc-primary); }
+        .mc-check-card input { margin-right: 10px; width: 18px; height: 18px; accent-color: var(--mc-primary); cursor: pointer; }
+        .mc-check-card span { font-size: 0.85rem; font-weight: 600; }
+
+        .mc-help-text { font-size: 0.75rem; color: var(--mc-text-muted); display: block; margin-top: 4px; }
+
+        /* Output Table */
+        .mc-summary-box {
+            background: #fff;
+            border: 1px solid var(--mc-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .mc-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+        .mc-table td { padding: 8px 0; border-bottom: 1px solid #f1f5f9; color: var(--mc-text); }
+        .mc-table td.right { text-align: right; font-weight: 600; }
+        .mc-table tr.total td { padding-top: 15px; font-weight: 800; font-size: 1.1rem; color: var(--mc-primary); border-bottom: none; border-top: 2px solid var(--mc-primary); }
+        .mc-table small { display: block; font-size: 0.75rem; color: var(--mc-text-muted); font-weight: 400; }
+
+        .mc-grand-total {
+            background: var(--mc-primary);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: auto;
+        }
+        .mc-grand-total span { display: block; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; margin-bottom: 5px; opacity: 0.9; }
+        .mc-grand-total div { font-size: 3rem; font-weight: 800; line-height: 1; }
+
+        .mc-btn-reset {
+            width: 100%;
+            padding: 12px;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            margin-top: 15px;
+            text-transform: uppercase;
+        }
+        .mc-btn-reset:hover { background: #cbd5e1; }
+
+        @media (max-width: 768px) {
+            .mc-calculator-wrapper { flex-direction: column; }
+            .mc-col-left { border-right: none; border-bottom: 1px solid var(--mc-border); padding: 20px; }
+            .mc-col-right { padding: 20px; }
+            .mc-row { flex-direction: column; gap: 15px; }
+            .mc-checkbox-group { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="mc-calculator-wrapper" id="mcApp">
+    <div class="mc-header">
+        <h2>Official Fee Calculator</h2>
+        <p>Motor Vehicles, Mobile Homes, Vessels, & Heavy Trucks</p>
+    </div>
+
+    <div class="mc-col-left">
+        
+        <div class="mc-section-title">1. Vehicle Registration Details</div>
+        <div class="mc-row">
+            <div class="mc-col">
+                <label>Vehicle Category</label>
+                <select id="mcCategory">
+                    <option value="motor_vehicle">Motor Vehicles</option>
+                    <option value="heavy_truck">Heavy Trucks</option>
+                    <option value="trailer">Trailers > 500 lbs & Buses</option>
+                    <option value="vessel">Vessels (Boats)</option>
+                    <option value="mobile_home">Mobile Homes</option>
+                    <option value="lease">Lease / Hire Auto</option>
+                </select>
+            </div>
+            <div class="mc-col">
+                <label>Vehicle Sub-Type (Weight/Length)</label>
+                <select id="mcSubType">
+                    </select>
+            </div>
+        </div>
+
+        <div class="mc-row">
+            <div class="mc-col">
+                <label>Months to Register (Proration)</label>
+                <select id="mcMonths">
+                    <option value="12" selected>12 Months (1 Year)</option>
+                    <option value="24">24 Months (2 Years)</option>
+                </select>
+                <span class="mc-help-text">Select 24 months to automatically add 2nd year fees.</span>
+            </div>
+            <div class="mc-col">
+                <label>Previous Plate Credit</label>
+                <div class="mc-input-icon">
+                    <span>$</span>
+                    <input type="number" id="mcCredit" value="0" min="0" step="5">
+                </div>
+                <span class="mc-help-text">Credit allowed from a surrendered plate.</span>
+            </div>
+        </div>
+
+        <div class="mc-section-title">2. Initial & Plate Fees</div>
+        <div class="mc-checkbox-group">
+            <label class="mc-check-card">
+                <input type="checkbox" id="mcInitReg">
+                <span>Initial Registration Fee ($225.00)</span>
+            </label>
+            <div class="mc-col">
+                <select id="mcPlateType">
+                    <option value="28.00">New Metal Plate ($28.00)</option>
+                    <option value="4.50">Transfer Existing Plate ($4.50)</option>
+                    <option value="0.00">Renewal / Decal Only ($0.00)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mc-section-title">3. Title & Mailing Fees</div>
+        <div class="mc-row">
+            <div class="mc-col">
+                <label>Title Transaction</label>
+                <select id="mcTitleType">
+                    <option value="0">No Title Transaction ($0.00)</option>
+                    <option value="77.25">New FL Vehicle Title ($77.25)</option>
+                    <option value="85.25">Used FL Vehicle Title ($85.25)</option>
+                    <option value="89.50">Out-of-State Title + VIN Check ($89.50)</option>
+                    <option value="78.25">Duplicate Title ($78.25)</option>
+                </select>
+            </div>
+            <div class="mc-col">
+                <label>Mailing Fees</label>
+                <select id="mcMailType">
+                    <option value="0">None / In-Person</option>
+                    <option value="5.75">Mail Plate & Decal ($5.75)</option>
+                    <option value="0.95">Mail Decal Only ($0.95)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mc-checkbox-group">
+            <label class="mc-check-card">
+                <input type="checkbox" id="mcFastTitle">
+                <span>Fast Title Service ($10.00)</span>
+            </label>
+            <label class="mc-check-card">
+                <input type="checkbox" id="mcLien">
+                <span>Record Lien / Mortgage ($2.00)</span>
+            </label>
+            <label class="mc-check-card">
+                <input type="checkbox" id="mcLateTitle">
+                <span>Late Title Penalty > 30 Days ($20.00)</span>
+            </label>
+            <label class="mc-check-card">
+                <input type="checkbox" id="mcBranchFee" checked>
+                <span>Martin Co. Branch Fee ($6.25)</span>
+            </label>
+            <label class="mc-check-card" id="vesselFeeCard" style="display:none;">
+                <input type="checkbox" id="mcCountyVessel">
+                <span>Optional County Vessel Fee</span>
+            </label>
+        </div>
+
+        <div class="mc-section-title">4. Martin County Sales Tax</div>
+        <div class="mc-row">
+            <div class="mc-col">
+                <label>Purchase Price</label>
+                <div class="mc-input-icon">
+                    <span>$</span>
+                    <input type="number" id="mcPrice" value="0" min="0" step="100">
+                </div>
+            </div>
+            <div class="mc-col">
+                <label>Trade-In Allowance</label>
+                <div class="mc-input-icon">
+                    <span>$</span>
+                    <input type="number" id="mcTrade" value="0" min="0" step="100">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="mc-col-right">
+        
+        <div class="mc-section-title" style="margin-top:0;">Fee Breakdown</div>
+        
+        <div class="mc-summary-box">
+            <table class="mc-table">
+                <tr>
+                    <td>
+                        Base Registration Fee
+                        <small id="lblSubtype">Auto under 2,500 lbs</small>
+                    </td>
+                    <td class="right" id="resBaseReg">$0.00</td>
+                </tr>
+                <tr>
+                    <td>Initial Reg Fee</td>
+                    <td class="right" id="resInitReg">$0.00</td>
+                </tr>
+                <tr>
+                    <td>Plate / Transfer Fee</td>
+                    <td class="right" id="resPlate">$0.00</td>
+                </tr>
+                <tr>
+                    <td>Title & Lien Fees</td>
+                    <td class="right" id="resTitle">$0.00</td>
+                </tr>
+                <tr>
+                    <td>Mail & Branch Fees</td>
+                    <td class="right" id="resMisc">$0.00</td>
+                </tr>
+                <tr>
+                    <td>Allowed Credit</td>
+                    <td class="right" style="color: var(--mc-success);" id="resCredit">-$0.00</td>
+                </tr>
+                <tr class="total">
+                    <td>Subtotal Fees</td>
+                    <td class="right" id="resFeesTotal">$0.00</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="mc-summary-box">
+            <table class="mc-table">
+                <tr>
+                    <td>
+                        FL State Tax (6%)
+                        <small>On Taxable Amount</small>
+                    </td>
+                    <td class="right" id="resStateTax">$0.00</td>
+                </tr>
+                <tr>
+                    <td>
+                        Martin County Surtax (0.5%)
+                        <small>Capped at first $5,000</small>
+                    </td>
+                    <td class="right" id="resCountyTax">$0.00</td>
+                </tr>
+                <tr class="total">
+                    <td>Subtotal Sales Tax</td>
+                    <td class="right" id="resTaxTotal">$0.00</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="mc-grand-total">
+            <span>Grand Total Due</span>
+            <div id="resGrandTotal">$0.00</div>
+        </div>
+
+        <button class="mc-btn-reset" id="mcResetBtn">Reset Calculator</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    
+    // --- Data Dictionary based on FL/Martin County Fee Schedules ---
+    const vehicleData = {
+        motor_vehicle: [
+            { label: "Auto under 2,500 lbs", fee: 30.90 },
+            { label: "Auto 2,500 - 3,499 lbs", fee: 38.90 },
+            { label: "Auto 3,500 lbs or more", fee: 48.90 },
+            { label: "Truck under 2,000 lbs", fee: 30.90 },
+            { label: "Truck 2,000 - 3,000 lbs", fee: 38.90 },
+            { label: "Truck 3,001 - 5,000 lbs", fee: 48.90 },
+            { label: "Motorcycle", fee: 23.60 },
+            { label: "Moped", fee: 16.60 }
+        ],
+        heavy_truck: [
+            { label: "5,001 - 5,999 lbs", fee: 65.75 },
+            { label: "6,000 - 7,999 lbs", fee: 92.75 },
+            { label: "8,000 - 9,999 lbs", fee: 108.00 },
+            { label: "10,000 - 14,999 lbs", fee: 123.00 },
+            { label: "15,000 - 19,999 lbs", fee: 182.00 },
+            { label: "20,000 - 26,000 lbs", fee: 256.00 }
+        ],
+        trailer: [
+            { label: "Trailer 501 - 1,999 lbs", fee: 32.50 },
+            { label: "Trailer 2,000 - 10,000 lbs", fee: 42.50 },
+            { label: "Semi-Trailer Permanent", fee: 20.00 }
+        ],
+        vessel: [
+            { label: "Class A-1 (under 12 ft)", fee: 10.75 },
+            { label: "Class A-2 (12 to <16 ft)", fee: 21.50 },
+            { label: "Class 1 (16 to <26 ft)", fee: 33.50 },
+            { label: "Class 2 (26 to <40 ft)", fee: 83.00 },
+            { label: "Class 3 (40 to <65 ft)", fee: 132.50 },
+            { label: "Class 4 (65 ft or more)", fee: 157.50 }
+        ],
+        mobile_home: [
+            { label: "Up to 35 ft", fee: 24.60 },
+            { label: "35 ft to 40 ft", fee: 29.60 },
+            { label: "40 ft to 45 ft", fee: 34.60 },
+            { label: "Over 45 ft", fee: 44.60 }
+        ],
+        lease: [
+            { label: "Lease/Hire Auto < 2500 lbs", fee: 30.90 },
+            { label: "Lease/Hire Auto 2500+ lbs", fee: 48.90 }
+        ]
+    };
+
+    // --- DOM Elements ---
+    const els = {
+        category: document.getElementById('mcCategory'),
+        subType: document.getElementById('mcSubType'),
+        months: document.getElementById('mcMonths'),
+        credit: document.getElementById('mcCredit'),
+        initReg: document.getElementById('mcInitReg'),
+        plateType: document.getElementById('mcPlateType'),
+        titleType: document.getElementById('mcTitleType'),
+        mailType: document.getElementById('mcMailType'),
+        fastTitle: document.getElementById('mcFastTitle'),
+        lien: document.getElementById('mcLien'),
+        lateTitle: document.getElementById('mcLateTitle'),
+        branchFee: document.getElementById('mcBranchFee'),
+        countyVessel: document.getElementById('mcCountyVessel'),
+        vesselCard: document.getElementById('vesselFeeCard'),
+        price: document.getElementById('mcPrice'),
+        trade: document.getElementById('mcTrade'),
+        
+        // Outputs
+        lblSubtype: document.getElementById('lblSubtype'),
+        resBaseReg: document.getElementById('resBaseReg'),
+        resInitReg: document.getElementById('resInitReg'),
+        resPlate: document.getElementById('resPlate'),
+        resTitle: document.getElementById('resTitle'),
+        resMisc: document.getElementById('resMisc'),
+        resCredit: document.getElementById('resCredit'),
+        resFeesTotal: document.getElementById('resFeesTotal'),
+        resStateTax: document.getElementById('resStateTax'),
+        resCountyTax: document.getElementById('resCountyTax'),
+        resTaxTotal: document.getElementById('resTaxTotal'),
+        resGrandTotal: document.getElementById('resGrandTotal'),
+        resetBtn: document.getElementById('mcResetBtn')
+    };
+
+    const formatCurrency = (num) => '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // --- Functions ---
+    function populateSubTypes() {
+        const cat = els.category.value;
+        const options = vehicleData[cat];
+        
+        els.subType.innerHTML = '';
+        options.forEach((opt, index) => {
+            const el = document.createElement('option');
+            el.value = opt.fee;
+            el.textContent = opt.label;
+            els.subType.appendChild(el);
+        });
+
+        // Toggle Vessel County Fee Checkbox
+        if(cat === 'vessel') {
+            els.vesselCard.style.display = 'flex';
+        } else {
+            els.vesselCard.style.display = 'none';
+            els.countyVessel.checked = false;
+        }
+        
+        calculate();
+    }
+
+    function calculate() {
+        // 1. Base Registration
+        const baseFee = parseFloat(els.subType.value) || 0;
+        const months = parseInt(els.months.value) || 12;
+        const multiplier = months / 12;
+        
+        let totalBaseReg = baseFee * multiplier;
+
+        // Apply optional county vessel fee (typically 50% of the state base fee)
+        if (els.category.value === 'vessel' && els.countyVessel.checked) {
+            totalBaseReg += (baseFee * 0.5) * multiplier;
+        }
+
+        // 2. Initial Reg & Plate
+        const initRegFee = els.initReg.checked ? 225.00 : 0;
+        const plateFee = parseFloat(els.plateType.value) || 0;
+
+        // 3. Title & Lien
+        const titleBase = parseFloat(els.titleType.value) || 0;
+        const fastFee = els.fastTitle.checked ? 10.00 : 0;
+        const lienFee = els.lien.checked ? 2.00 : 0;
+        const lateTitleFee = els.lateTitle.checked ? 20.00 : 0;
+        
+        const totalTitle = titleBase + fastFee + lienFee + lateTitleFee;
+
+        // 4. Misc & Mail
+        const mailFee = parseFloat(els.mailType.value) || 0;
+        const branchFee = els.branchFee.checked ? 6.25 : 0;
+        
+        const totalMisc = mailFee + branchFee;
+
+        // 5. Credits
+        const credit = parseFloat(els.credit.value) || 0;
+
+        // 6. Subtotal Fees
+        const subtotalFees = Math.max(0, totalBaseReg + initRegFee + plateFee + totalTitle + totalMisc - credit);
+
+        // 7. Sales Tax (Martin County: 6% State, 0.5% County capped at $5000)
+        const price = parseFloat(els.price.value) || 0;
+        const trade = parseFloat(els.trade.value) || 0;
+        const taxableAmount = Math.max(0, price - trade);
+
+        const stateTax = taxableAmount * 0.06;
+        const countyTax = Math.min(taxableAmount, 5000) * 0.005; // 0.5% up to 5k
+        const subtotalTax = stateTax + countyTax;
+
+        // 8. Grand Total
+        const grandTotal = subtotalFees + subtotalTax;
+
+        // --- Render ---
+        const selIndex = els.subType.selectedIndex;
+        els.lblSubtype.textContent = selIndex >= 0 ? els.subType.options[selIndex].text : '';
+
+        els.resBaseReg.textContent = formatCurrency(totalBaseReg);
+        els.resInitReg.textContent = formatCurrency(initRegFee);
+        els.resPlate.textContent = formatCurrency(plateFee);
+        els.resTitle.textContent = formatCurrency(totalTitle);
+        els.resMisc.textContent = formatCurrency(totalMisc);
+        els.resCredit.textContent = "-" + formatCurrency(credit);
+        els.resFeesTotal.textContent = formatCurrency(subtotalFees);
+
+        els.resStateTax.textContent = formatCurrency(stateTax);
+        els.resCountyTax.textContent = formatCurrency(countyTax);
+        els.resTaxTotal.textContent = formatCurrency(subtotalTax);
+
+        els.resGrandTotal.textContent = formatCurrency(grandTotal);
+    }
+
+    function resetForm() {
+        const inputs = document.querySelectorAll('#mcApp input[type="number"]');
+        inputs.forEach(input => input.value = 0);
+        
+        const checks = document.querySelectorAll('#mcApp input[type="checkbox"]');
+        checks.forEach(check => check.checked = false);
+        els.branchFee.checked = true; // default on
+
+        els.category.value = 'motor_vehicle';
+        els.months.value = '12';
+        els.plateType.value = '28.00';
+        els.titleType.value = '0';
+        els.mailType.value = '0';
+
+        populateSubTypes();
+    }
+
+    // --- Event Listeners ---
+    els.category.addEventListener('change', populateSubTypes);
+    
+    const interactables = document.querySelectorAll('#mcApp input, #mcApp select');
+    interactables.forEach(el => {
+        el.addEventListener('input', calculate);
+        el.addEventListener('change', calculate);
+    });
+
+    els.resetBtn.addEventListener('click', resetForm);
+
+    // Init
+    populateSubTypes();
+
+});
+</script>
+</body>
+</html>
